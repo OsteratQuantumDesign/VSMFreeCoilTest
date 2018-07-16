@@ -12,7 +12,7 @@ Public Class Pico2205A
 
 #Region "Constants and Variables"
     'Constants
-    Public inputRanges() As Integer = New Integer(12) {10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000} ' ranges in mV
+    Public inputRanges() As Integer = New Integer(8) {50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000} ' ranges in mV
     Public Const PS2000_MAX_VALUE = 32767
     Public Const PS2000_LOST_DATA = -32768
     Public _handle As Short
@@ -46,12 +46,12 @@ Public Class Pico2205A
 #End Region
 
 #Region "Enumerations"
-    Public Enum Dc As Short 'input coupling mode
+    Public Enum Dc 'input coupling mode
         AC = 0
         DC = 1
     End Enum
 
-    Public Enum Channel As Short
+    Public Enum Channel
         PS2000_CHANNEL_A = 0
         PS2000_CHANNEL_B = 1
     End Enum
@@ -69,7 +69,7 @@ Public Class Pico2205A
         PS2000_MAX_RANGES
     End Enum
 
-    Public Enum TimeUnits As Short
+    Public Enum TimeUnits
         PS2000_FS
         PS2000_PS
         PS2000_NS
@@ -148,17 +148,17 @@ Public Class Pico2205A
     End Enum
 
     Public Enum ThresholdDirection
-        PS2000_ABOVE
-        PS2000_BELOW
-        PS2000_ADV_RISING
-        PS2000_ADV_FALLING
-        PS2000_RISING_OR_FALLING
-        PS2000_INSIDE = PS2000_ABOVE
-        PS2000_OUTSIDE = PS2000_BELOW
-        PS2000_ENTER = PS2000_ADV_RISING
-        PS2000_EXIT = PS2000_ADV_FALLING
-        PS2000_ENTER_OR_EXIT = PS2000_RISING_OR_FALLING
-        PS2000_ADV_NONE = PS2000_ADV_RISING
+        PS2000_ABOVE                'for gated triggers: above a threshold
+        PS2000_BELOW                'for gated triggers: below a threshold
+        PS2000_ADV_RISING           'for threshold triggers: rising edge
+        PS2000_ADV_FALLING          'for threshold triggers: falling edge
+        PS2000_RISING_OR_FALLING    'for threshold triggers: either edge
+        PS2000_INSIDE               'for window-qualified triggers: inside window
+        PS2000_OUTSIDE              'for window-qualified triggers: outside window
+        PS2000_ENTER                'for window triggers: entering the window
+        PS2000_EXIT                 'for window triggers: leaving the window
+        PS2000_ENTER_OR_EXIT        'for window triggers: either entering or leaving the window
+        PS2000_ADV_NONE             'no trigger
     End Enum
 
     Public Enum ThresholdMode
@@ -181,7 +181,7 @@ Public Class Pico2205A
         PS2000_PW_TYPE_OUT_OF_RANGE
     End Enum
 
-    Public Enum SampleRateNs 'ns
+    Public Enum SampleRate 'ns
         SR0 = 5
         SR1 = 10
         SR2 = 20
@@ -206,34 +206,52 @@ Public Class Pico2205A
 
 #Region "Original Declared Functions"
     ' Original Declared Functions 
-    Private Declare Function ps2000_open_unit Lib "ps2000.dll" () As Short
-    Private Declare Function ps2000_flash_led Lib "ps2000.dll" (ByVal handle As Short) As Short
     Private Declare Sub ps2000_close_unit Lib "ps2000.dll" (ByVal handle As Short)
-    Private Declare Function ps2000_get_unit_info Lib "ps2000.dll" (ByVal handle As Short, ByVal str As String, ByVal lth As Short, ByVal line_no As Info) As Short
-    Private Declare Function ps2000_set_channel Lib "ps2000.dll" (ByVal handle As Short, ByVal channel As Channel, ByVal enabled As Short, ByVal dc As Short, ByVal range As VoltageRange) As Short
-    Private Declare Function ps2000_set_trigger2 Lib "ps2000.dll" (ByVal handle As Short, ByVal source As Channel, ByVal threshold As Short, ByVal direction As ThresholdDirection,
-                                                           ByVal delay As Single, ByVal auto_trigger_ms As Short) As Short
-    Public Declare Function ps2000_get_timebase Lib "ps2000.dll" (ByVal handle As Short, ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Integer, ByRef timeUnits As Short,
-                                                           ByVal oversample As Short, ByRef maxSamples As Integer) As Short
-    Private Declare Function ps2000_get_timebase2 Lib "ps2000.dll" (ByVal handle As Short, ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Double, ByRef timeUnits As Short,
-                                                            ByVal oversample As Short, ByRef maxSamples As Integer) As Short
-    Private Declare Function ps2000_run_block Lib "ps2000.dll" (ByVal handle As Short, ByVal no_of_values As Integer, ByVal timebase As Short, ByVal oversample As Short, ByRef timeIndisposedMs As Integer) As Short
-    Private Declare Function ps2000_ready Lib "ps2000.dll" (ByVal handle As Short) As Short
-    Private Declare Function ps2000_get_values Lib "ps2000.dll" (ByVal handle As Short, ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short, ByRef buffer_d As Short,
-                                                         ByRef overflow As Short, ByVal no_of_values As Integer) As Integer
-    Private Declare Function ps2000_get_times_and_values Lib "ps2000.dll" (ByVal handle As Short, ByRef times As Integer, ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short,
-                                                                   ByRef buffer_d As Short, ByRef overflow As Short, ByVal timeUnits As Short, ByVal numSamples As Integer) As Integer
-    Private Declare Function ps2000_stop Lib "ps2000.dll" (ByVal handle As Short) As Short
-    Private Declare Function ps2000_run_streaming Lib "ps2000.dll" (ByVal handle As Short, ByVal sample_interval_ms As Short, ByVal maxSamples As Integer, ByVal windowed As Short) As Short
-    Private Declare Function ps2000_run_streaming_ns Lib "ps2000.dll" (ByVal handle As Short, ByVal sample_interval As UInteger, ByVal timeUnits As TimeUnits, ByVal maxSamples As UInteger,
-                                                               ByVal auto_stop As Short, ByVal noOfSamplesPerAggregate As UInteger, ByVal overview_buffer_size As UInteger) As Short
+    Private Declare Function ps2000_flash_led Lib "ps2000.dll" (ByVal handle As Short) As Short
+    'ps2000_get_streaming_last_values - uses pointers!
+    'ps2000_get_streaming_values - uses pointers!
     Private Declare Function ps2000_get_streaming_values_no_aggregation Lib "ps2000.dll" (ByVal handle As Short, ByRef start_time As Double, ByRef pBuffer_a As Short, ByRef pBuffer_b As Short,
                                                                                   ByRef pBuffer_c As Short, ByRef pBuffer_d As Short, ByRef overflow As Short, ByRef triggerAt As UInteger,
                                                                                   ByRef trigger As Short, ByVal numValues As UInteger) As UInteger
+    Private Declare Function ps2000_get_timebase Lib "ps2000.dll" (ByVal handle As Short, ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Integer, ByRef timeUnits As Short,
+                                                           ByVal oversample As Short, ByRef maxSamples As Integer) As Short
+    Private Declare Function ps2000_get_timebase2 Lib "ps2000.dll" (ByVal handle As Short, ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Double, ByRef timeUnits As Short,
+                                                            ByVal oversample As Short, ByRef maxSamples As Integer) As Short
+    Private Declare Function ps2000_get_times_and_values Lib "ps2000.dll" (ByVal handle As Short, ByRef times As Integer, ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short,
+                                                                   ByRef buffer_d As Short, ByRef overflow As Short, ByVal timeUnits As Short, ByVal numSamples As Integer) As Integer
+    Private Declare Function ps2000_get_unit_info Lib "ps2000.dll" (ByVal handle As Short, ByVal str As String, ByVal lth As Short, ByVal line_no As Info) As Short
+    Private Declare Function ps2000_get_values Lib "ps2000.dll" (ByVal handle As Short, ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short, ByRef buffer_d As Short,
+                                                         ByRef overflow As Short, ByVal no_of_values As Integer) As Integer
+    Private Declare Function ps2000_last_button_press Lib "ps2000.dll" (ByVal handle As Short) As Short
+    Private Declare Function ps2000_open_unit Lib "ps2000.dll" () As Short
+    Private Declare Function ps2000_open_unit_async Lib "ps2000.dll" () As Short
+    'ps2000_open_unit_progress - uses pointers!
+    'ps2000_overview_buffer_status - uses pointers!
+    'ps2000PingUnit
+    Private Declare Function ps2000PingUnit Lib "ps2000.dll" (ByVal handle As Short) As Short
+    Private Declare Function ps2000_ready Lib "ps2000.dll" (ByVal handle As Short) As Short
+    Private Declare Function ps2000_run_block Lib "ps2000.dll" (ByVal handle As Short, ByVal no_of_values As Integer, ByVal timebase As Short, ByVal oversample As Short, ByRef timeIndisposedMs As Integer) As Short
+    Private Declare Function ps2000_run_streaming Lib "ps2000.dll" (ByVal handle As Short, ByVal sample_interval_ms As Short, ByVal maxSamples As Integer, ByVal windowed As Short) As Short
+    Private Declare Function ps2000_run_streaming_ns Lib "ps2000.dll" (ByVal handle As Short, ByVal sample_interval As UInteger, ByVal timeUnits As TimeUnits, ByVal maxSamples As UInteger,
+                                                               ByVal auto_stop As Short, ByVal noOfSamplesPerAggregate As UInteger, ByVal overview_buffer_size As UInteger) As Short
+    'ps2000SetAdvTriggerChannelConditions - uses pointers!
+    'ps2000SetAdvTriggerChannelDirections
+    Private Declare Function ps2000SetAdvTriggerChannelDirections Lib "ps2000.dll" (ByVal handle As Short, channelA As ThresholdDirection, channelB As ThresholdDirection,
+                                                                                    channelC As ThresholdDirection, channelD As ThresholdDirection, ext As ThresholdDirection) As Short
+    'ps2000SetAdvTriggerChannelProperties - uses pointers!
+    Private Declare Function ps2000SetAdvTriggerDelay Lib "ps2000.dll" (ByVal handle As Short, ByVal delay As UInt32, preTriggerDelay As Single) As Short
+    Private Declare Function ps2000_set_channel Lib "ps2000.dll" (ByVal handle As Short, ByVal channel As Channel, ByVal enabled As Short, ByVal dc As Short, ByVal range As VoltageRange) As Short
     Private Declare Function ps2000_set_ets Lib "ps2000.dll" (ByVal handle As Short, ByVal mode As Short, ByVal ets_cycles As Short, ByVal ets_interleave As Short) As Integer
+    'ps2000SetPulseWidthQualifier - uses pointers!
+    'ps2000_set_sig_gen_arbitrary - uses pointers!
     Private Declare Function ps2000_set_sig_gen_built_in Lib "ps2000.dll" (ByVal handle As Short, ByVal offsetVoltage As Integer, ByVal pkToPk As UInteger, ByVal waveType As WaveType,
                                                                    ByVal startFrequency As Single, ByVal stopFrequency As Single, ByVal increment As Single, ByVal dwellTime As Single,
                                                                    ByVal sweepType As SweepType, ByVal sweeps As UInteger) As Short
+    Private Declare Function ps2000_set_trigger Lib "ps2000.dll" (ByVal handle As Short, ByVal source As Channel, ByVal threshold As Short, ByVal direction As ThresholdDirection,
+                                                           ByVal delay As Short, ByVal auto_trigger_ms As Short) As Short
+    Private Declare Function ps2000_set_trigger2 Lib "ps2000.dll" (ByVal handle As Short, ByVal source As Channel, ByVal threshold As Short, ByVal direction As ThresholdDirection,
+                                                           ByVal delay As Single, ByVal auto_trigger_ms As Short) As Short
+    Private Declare Function ps2000_stop Lib "ps2000.dll" (ByVal handle As Short) As Short
 
     ' Wrapper Functions
     Declare Function PollFastStreaming Lib "ps2000Wrap.dll" (ByVal handle As Integer) As Short
@@ -271,7 +289,6 @@ Public Class Pico2205A
     ''' <summary>
     ''' Specifies if a channel is to be enabled, the AC/DC coupling mode and the input range.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="channel"></param>
     ''' <param name="enabled"></param>
     ''' <param name="dc"></param>
@@ -284,7 +301,6 @@ Public Class Pico2205A
     ''' This function is used to enable or disable triggering and set its parameters. It has the same behavior As ps2000_set_trigger, except 
     ''' that the delay parameter Is a floating-point value.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="source"></param>
     ''' <param name="threshold"></param>
     ''' <param name="direction"></param>
@@ -296,11 +312,23 @@ Public Class Pico2205A
     End Sub
 
     ''' <summary>
+    ''' Same as above, however the delay is a short instead of single (float)
+    ''' </summary>
+    ''' <param name="source"></param>
+    ''' <param name="threshold"></param>
+    ''' <param name="direction"></param>
+    ''' <param name="delay"></param>
+    ''' <param name="auto_trigger_ms"></param>
+    Public Sub SetTrigger(ByVal source As Channel, ByVal threshold As Short, ByVal direction As ThresholdDirection,
+                                                           ByVal delay As Short, ByVal auto_trigger_ms As Short)
+        ps2000_set_trigger(_handle, source, threshold, direction, delay, auto_trigger_ms)
+    End Sub
+
+    ''' <summary>
     ''' This function discovers which timebases are available on the oscilloscope. You should Set up the channels Using ps2000_set_channel 
     ''' And, If required, ETS mode Using ps2000_set_ets first. Then Call this Function With increasing values Of timebase, starting from 0, until 
     ''' you find a timebase With a sampling interval And sample count close enough To your requirements.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="timebase"></param>
     ''' <param name="numSamples"></param>
     ''' <param name="timeInterval"></param>
@@ -308,12 +336,12 @@ Public Class Pico2205A
     ''' <param name="oversample"></param>
     ''' <param name="maxSamples"></param>
     ''' <returns></returns>
-    Public Function GetTimebase(ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Integer, ByRef timeUnits As TimeUnits,
+    Public Function GetTimebase(ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Integer, ByRef timeUnits As Short,
                                                            ByVal oversample As Short, ByRef maxSamples As Integer) As Short
-        Return ps2000_get_timebase(_handle, timebase, numSamples, timeInterval, CShort(timeUnits), oversample, maxSamples)
+        Return ps2000_get_timebase(_handle, timebase, numSamples, timeInterval, timeUnits, oversample, maxSamples)
     End Function
 
-    Public Function GetTimebase2(ByVal handle As Short, ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Double, ByRef timeUnits As Short,
+    Public Function GetTimebase2(ByVal timebase As Short, ByVal numSamples As Integer, ByRef timeInterval As Double, ByRef timeUnits As Short,
                                                             ByVal oversample As Short, ByRef maxSamples As Integer) As Short
         Return ps2000_get_timebase2(_handle, timebase, numSamples, timeInterval, timeUnits, oversample, maxSamples)
     End Function
@@ -321,7 +349,6 @@ Public Class Pico2205A
     ''' <summary>
     ''' This function tells the oscilloscope to start collecting data in block mode.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="no_of_values"></param>
     ''' <param name="timebase"></param>
     ''' <param name="oversample"></param>
@@ -334,7 +361,6 @@ Public Class Pico2205A
     ''' <summary>
     ''' This function polls the driver to see if the oscilloscope has finished the last data collection operation.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <returns></returns>
     Public Function Ready() As Short
         Return ps2000_ready(_handle)
@@ -345,14 +371,13 @@ Public Class Pico2205A
     ''' Note that If you are Using block mode Or ETS mode And Call this Function before the oscilloscope Is ready, no capture will be available And the driver
     ''' will Not return any samples.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="buffer_a"></param>
     ''' <param name="buffer_b"></param>
     ''' <param name="buffer_c"></param>
     ''' <param name="buffer_d"></param>
     ''' <param name="overflow"></param>
     ''' <param name="no_of_values"></param>
-    Public Sub GetValues(ByVal handle As Short, ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short, ByRef buffer_d As Short,
+    Public Sub GetValues(ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short, ByRef buffer_d As Short,
                                                          ByRef overflow As Short, ByVal no_of_values As Integer)
         ps2000_get_values(_handle, buffer_a, buffer_b, buffer_c, buffer_d, overflow, no_of_values)
     End Sub
@@ -362,7 +387,6 @@ Public Class Pico2205A
     ''' Note that If you are Using block mode Or ETS mode And Call this Function before the oscilloscope Is ready, no capture will
     ''' be available And the driver will Not return any samples.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="times"></param>
     ''' <param name="buffer_a"></param>
     ''' <param name="buffer_b"></param>
@@ -373,9 +397,13 @@ Public Class Pico2205A
     ''' <param name="numSamples"></param>
     ''' <returns></returns>
     Public Function GetTimeAndValues(ByRef times As Integer, ByRef buffer_a As Short, ByRef buffer_b As Short, ByRef buffer_c As Short,
-                                                                   ByRef buffer_d As Short, ByRef overflow As Short, ByVal timeUnits As TimeUnits, ByVal numSamples As Integer) As Integer
+                                                                   ByRef buffer_d As Short, ByRef overflow As Short, ByVal timeUnits As Short, ByVal numSamples As Integer) As Integer
         Return ps2000_get_times_and_values(_handle, times, buffer_a, buffer_b, buffer_c, buffer_d, overflow, timeUnits, numSamples)
     End Function
+
+    Public Sub SetAdvTriggerDelay(ByRef delay As UInt32, ByRef preTriggerDelay As Single)
+        ps2000SetAdvTriggerDelay(_handle, delay, preTriggerDelay)
+    End Sub
 
     Public Sub StopUnit()
         ps2000_stop(_handle)
@@ -388,11 +416,10 @@ Public Class Pico2205A
     ''' For streaming with the PicoScope 2202, 2203, 2204, 2204A, 2205 And 2205A variants, we recommend you use ps2000_run_streaming_ns instead: 
     ''' this will allow much faster data transfer.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="sample_interval_ms"></param>
     ''' <param name="maxSamples"></param>
     ''' <param name="windowed"></param>
-    Public Sub RunSteaming(ByVal handle As Short, ByVal sample_interval_ms As Short, ByVal maxSamples As Integer, ByVal windowed As Short)
+    Public Sub RunSteaming(ByVal sample_interval_ms As Short, ByVal maxSamples As Integer, ByVal windowed As Short)
         ps2000_run_streaming(_handle, sample_interval_ms, maxSamples, windowed)
     End Sub
 
@@ -400,14 +427,13 @@ Public Class Pico2205A
     ''' This function tells the oscilloscope to start collecting data in fast streaming mode. It returns immediately without waiting For 
     ''' data To be captured. After calling it, you should next call ps2000_get_streaming_last_values to copy the data to your application's buffer.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="sample_interval"></param>
     ''' <param name="timeUnits"></param>
     ''' <param name="maxSamples"></param>
     ''' <param name="auto_stop"></param>
     ''' <param name="noOfSamplesPerAggregate"></param>
     ''' <param name="overview_buffer_size"></param>
-    Public Sub RunSteamingNsec(ByVal handle As Short, ByVal sample_interval As UInteger, ByVal timeUnits As TimeUnits, ByVal maxSamples As UInteger,
+    Public Sub RunSteamingNsec(ByVal sample_interval As UInteger, ByVal timeUnits As TimeUnits, ByVal maxSamples As UInteger,
                                                                ByVal auto_stop As Short, ByVal noOfSamplesPerAggregate As UInteger, ByVal overview_buffer_size As UInteger)
         ps2000_run_streaming_ns(_handle, sample_interval, timeUnits, maxSamples, auto_stop, noOfSamplesPerAggregate, overview_buffer_size)
     End Sub
@@ -420,7 +446,6 @@ Public Class Pico2205A
     ''' PS2000_MIN_VALUE to PS2000_MAX_VALUE. The special value PS2000_LOST_DATA Is stored in the buffer when data could Not be 
     ''' collected because of a buffer overrun. (See Voltage ranges for more details of data values.)
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="start_time"></param>
     ''' <param name="pBuffer_a"></param>
     ''' <param name="pBuffer_b"></param>
@@ -430,7 +455,7 @@ Public Class Pico2205A
     ''' <param name="triggerAt"></param>
     ''' <param name="trigger"></param>
     ''' <param name="numValues"></param>
-    Public Sub GetStreamingValuesNoAggregation(ByVal handle As Short, ByRef start_time As Double, ByRef pBuffer_a As Short, ByRef pBuffer_b As Short,
+    Public Sub GetStreamingValuesNoAggregation(ByRef start_time As Double, ByRef pBuffer_a As Short, ByRef pBuffer_b As Short,
                                                                                   ByRef pBuffer_c As Short, ByRef pBuffer_d As Short, ByRef overflow As Short, ByRef triggerAt As UInteger,
                                                                                   ByRef trigger As Short, ByVal numValues As UInteger)
         ps2000_get_streaming_values_no_aggregation(_handle, start_time, pBuffer_a, pBuffer_b, pBuffer_c, pBuffer_d, overflow, triggerAt, trigger, numValues)
@@ -439,11 +464,10 @@ Public Class Pico2205A
     ''' <summary>
     ''' This function is used to enable or disable ETS mode and to set the ETS parameters.
     ''' </summary>
-    ''' <param name="handle"></param>
     ''' <param name="mode"></param>
     ''' <param name="ets_cycles"></param>
     ''' <param name="ets_interleave"></param>
-    Public Sub SetETS(ByVal handle As Short, ByVal mode As Short, ByVal ets_cycles As Short, ByVal ets_interleave As Short)
+    Public Sub SetETS(ByVal mode As Short, ByVal ets_cycles As Short, ByVal ets_interleave As Short)
         ps2000_set_ets(_handle, mode, ets_cycles, ets_interleave)
     End Sub
 
@@ -466,7 +490,7 @@ Public Class Pico2205A
 
         Dim mVVal As Single        ' Use this variable to force data to be returned as an integer
 
-        mVVal = (CSng(raw) * inputRanges(range)) / maxADCValue
+        mVVal = (CSng(raw) * inputRanges(range - 1)) / maxADCValue
 
         Return mVVal
 
@@ -481,7 +505,7 @@ Public Class Pico2205A
     ''' <returns>adcCount = value converted into an ADC count</returns>
     Public Function mvToAdc(ByVal mv As Short, ByVal range As Integer, ByVal maxADCValue As Short) As Short
         Dim adcCount As Short
-        adcCount = CShort((mv / inputRanges(range)) * maxADCValue)
+        adcCount = CShort((mv / inputRanges(range - 1)) * maxADCValue)
         Return adcCount
     End Function
 
@@ -514,7 +538,6 @@ Public Class Pico2205A
     ''' To use this, pass in the desired mode and the handle from your app
     ''' </summary>
     ''' <param name="etsMode"></param>
-    ''' <param name="handle"></param>
     Public Sub setETSMode(etsMode As String, cycles As Short, interleave As Short)
         Dim mode As Short
         GetMode(etsMode)
@@ -579,49 +602,49 @@ Public Class Pico2205A
     ''' <param name="cycles">is the number of cycles you wish to read of the signal</param>
     ''' <param name="freq">is the freq of the signal you are reading</param>
     ''' <returns></returns>
-    Public Function SetSampleRate(channels As Short, cycles As Short, freq As Short) As SampleRateNs
+    Public Function SetSampleRate(channels As Short, cycles As Short, freq As Short) As SampleRate
         Dim period As Double = 1 / freq
         Dim maxSampleRate As Double = (period * channels) / 16000
         'Need select case to find the highest sample rate
         Select Case maxSampleRate
             Case <= 5
-                Return SampleRateNs.SR0
+                Return SampleRate.SR0
             Case <= 10
-                Return SampleRateNs.SR1
+                Return SampleRate.SR1
             Case <= 20
-                Return SampleRateNs.SR2
+                Return SampleRate.SR2
             Case <= 40
-                Return SampleRateNs.SR3
+                Return SampleRate.SR3
             Case <= 80
-                Return SampleRateNs.SR4
+                Return SampleRate.SR4
             Case <= 160
-                Return SampleRateNs.SR5
+                Return SampleRate.SR5
             Case <= 320
-                Return SampleRateNs.SR6
+                Return SampleRate.SR6
             Case <= 640
-                Return SampleRateNs.SR7
+                Return SampleRate.SR7
             Case <= 1280
-                Return SampleRateNs.SR8
+                Return SampleRate.SR8
             Case <= 2560
-                Return SampleRateNs.SR9
+                Return SampleRate.SR9
             Case <= 5120
-                Return SampleRateNs.SR10
+                Return SampleRate.SR10
             Case <= 10240
-                Return SampleRateNs.SR11
+                Return SampleRate.SR11
             Case <= 20480
-                Return SampleRateNs.SR12
+                Return SampleRate.SR12
             Case <= 40960
-                Return SampleRateNs.SR13
+                Return SampleRate.SR13
             Case <= 81920
-                Return SampleRateNs.SR14
+                Return SampleRate.SR14
             Case <= 163840
-                Return SampleRateNs.SR15
+                Return SampleRate.SR15
             Case <= 327680
-                Return SampleRateNs.SR16
+                Return SampleRate.SR16
             Case <= 655360
-                Return SampleRateNs.SR17
+                Return SampleRate.SR17
         End Select
-        Return SampleRateNs.SR18
+        Return SampleRate.SR18
     End Function
 #End Region
 End Class
