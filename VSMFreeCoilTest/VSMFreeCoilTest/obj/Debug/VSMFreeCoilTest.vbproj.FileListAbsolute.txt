@@ -1,0 +1,10 @@
+c:\users\oster\documents\visual studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\bin\Debug\VSMFreeCoilTest.exe.config
+c:\users\oster\documents\visual studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\obj\Debug\VSMFreeCoilTest.VSMFreeCoilTest.resources
+c:\users\oster\documents\visual studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\obj\Debug\VSMFreeCoilTest.Resources.resources
+c:\users\oster\documents\visual studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\obj\Debug\VSMFreeCoilTest.vbproj.GenerateResource.Cache
+C:\Users\oster\Documents\Visual Studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\bin\Debug\VSMFreeCoilTest.exe
+C:\Users\oster\Documents\Visual Studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\bin\Debug\VSMFreeCoilTest.pdb
+C:\Users\oster\Documents\Visual Studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\bin\Debug\VSMFreeCoilTest.xml
+C:\Users\oster\Documents\Visual Studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\obj\Debug\VSMFreeCoilTest.exe
+C:\Users\oster\Documents\Visual Studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\obj\Debug\VSMFreeCoilTest.xml
+C:\Users\oster\Documents\Visual Studio 2015\Projects\VSMFreeCoilTest\VSMFreeCoilTest\obj\Debug\VSMFreeCoilTest.pdb

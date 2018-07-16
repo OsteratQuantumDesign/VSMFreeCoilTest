@@ -1,0 +1,235 @@
+﻿<?xml version="1.0"?>
+<doc>
+<assembly>
+<name>
+VSMFreeCoilTest
+</name>
+</assembly>
+<members>
+<member name="T:VSMFreeCoilTest.My.Resources.Resources">
+<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member>
+<member name="P:VSMFreeCoilTest.My.Resources.Resources.ResourceManager">
+<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member>
+<member name="P:VSMFreeCoilTest.My.Resources.Resources.Culture">
+<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member>
+<member name="M:VSMFreeCoilTest.VSMFreeCoilTest.DoWriteCsvFile(System.String)">
+ <summary>
+ This sub creates a file, named using time/date, writes the current line of data,
+ </summary>
+ <param name="input"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.SetChannel(VSMFreeCoilTest.Pico2205A.Channel,System.Int16,System.Int16,VSMFreeCoilTest.Pico2205A.VoltageRange)">
+ <summary>
+ Specifies if a channel is to be enabled, the AC/DC coupling mode and the input range.
+ </summary>
+ <param name="channel"></param>
+ <param name="enabled"></param>
+ <param name="dc"></param>
+ <param name="range"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.SetTrigger2(VSMFreeCoilTest.Pico2205A.Channel,System.Int16,VSMFreeCoilTest.Pico2205A.ThresholdDirection,System.Single,System.Int16)">
+ <summary>
+ This function is used to enable or disable triggering and set its parameters. It has the same behavior As ps2000_set_trigger, except 
+ that the delay parameter Is a floating-point value.
+ </summary>
+ <param name="source"></param>
+ <param name="threshold"></param>
+ <param name="direction"></param>
+ <param name="delay"></param>
+ <param name="auto_trigger_ms"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.SetTrigger(VSMFreeCoilTest.Pico2205A.Channel,System.Int16,VSMFreeCoilTest.Pico2205A.ThresholdDirection,System.Int16,System.Int16)">
+ <summary>
+ Same as above, however the delay is a short instead of single (float)
+ </summary>
+ <param name="source"></param>
+ <param name="threshold"></param>
+ <param name="direction"></param>
+ <param name="delay"></param>
+ <param name="auto_trigger_ms"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.GetTimebase(System.Int16,System.Int32,System.Int32@,System.Int16@,System.Int16,System.Int32@)">
+ <summary>
+ This function discovers which timebases are available on the oscilloscope. You should Set up the channels Using ps2000_set_channel 
+ And, If required, ETS mode Using ps2000_set_ets first. Then Call this Function With increasing values Of timebase, starting from 0, until 
+ you find a timebase With a sampling interval And sample count close enough To your requirements.
+ </summary>
+ <param name="timebase"></param>
+ <param name="numSamples"></param>
+ <param name="timeInterval"></param>
+ <param name="timeUnits"></param>
+ <param name="oversample"></param>
+ <param name="maxSamples"></param>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.RunBlock(System.Int32,System.Int16,System.Int16,System.Int32@)">
+ <summary>
+ This function tells the oscilloscope to start collecting data in block mode.
+ </summary>
+ <param name="no_of_values"></param>
+ <param name="timebase"></param>
+ <param name="oversample"></param>
+ <param name="timeIndisposedMs"></param>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.Ready">
+ <summary>
+ This function polls the driver to see if the oscilloscope has finished the last data collection operation.
+ </summary>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.GetValues(System.Int16@,System.Int16@,System.Int16@,System.Int16@,System.Int16@,System.Int32)">
+ <summary>
+ This function is used to get values in compatible streaming mode after calling ps2000_run_streaming, Or in block mode after calling ps2000_run_block. 
+ Note that If you are Using block mode Or ETS mode And Call this Function before the oscilloscope Is ready, no capture will be available And the driver
+ will Not return any samples.
+ </summary>
+ <param name="buffer_a"></param>
+ <param name="buffer_b"></param>
+ <param name="buffer_c"></param>
+ <param name="buffer_d"></param>
+ <param name="overflow"></param>
+ <param name="no_of_values"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.GetTimeAndValues(System.Int32@,System.Int16@,System.Int16@,System.Int16@,System.Int16@,System.Int16@,System.Int16,System.Int32)">
+ <summary>
+ This function is used to get values and times in block mode after calling ps2000_run_block. 
+ Note that If you are Using block mode Or ETS mode And Call this Function before the oscilloscope Is ready, no capture will
+ be available And the driver will Not return any samples.
+ </summary>
+ <param name="times"></param>
+ <param name="buffer_a"></param>
+ <param name="buffer_b"></param>
+ <param name="buffer_c"></param>
+ <param name="buffer_d"></param>
+ <param name="overflow"></param>
+ <param name="timeUnits"></param>
+ <param name="numSamples"></param>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.RunSteaming(System.Int16,System.Int32,System.Int16)">
+ <summary>
+ This function tells the oscilloscope to start collecting data in compatible streaming mode. If this function Is called when a trigger 
+ has been enabled, the trigger settings will be ignored.
+  
+ For streaming with the PicoScope 2202, 2203, 2204, 2204A, 2205 And 2205A variants, we recommend you use ps2000_run_streaming_ns instead: 
+ this will allow much faster data transfer.
+ </summary>
+ <param name="sample_interval_ms"></param>
+ <param name="maxSamples"></param>
+ <param name="windowed"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.RunSteamingNsec(System.UInt32,VSMFreeCoilTest.Pico2205A.TimeUnits,System.UInt32,System.Int16,System.UInt32,System.UInt32)">
+ <summary>
+ This function tells the oscilloscope to start collecting data in fast streaming mode. It returns immediately without waiting For 
+ data To be captured. After calling it, you should next call ps2000_get_streaming_last_values to copy the data to your application's buffer.
+ </summary>
+ <param name="sample_interval"></param>
+ <param name="timeUnits"></param>
+ <param name="maxSamples"></param>
+ <param name="auto_stop"></param>
+ <param name="noOfSamplesPerAggregate"></param>
+ <param name="overview_buffer_size"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.GetStreamingValuesNoAggregation(System.Double@,System.Int16@,System.Int16@,System.Int16@,System.Int16@,System.Int16@,System.UInt32@,System.Int16@,System.UInt32)">
+ <summary>
+ This function retrieves raw streaming data from the driver's data store after fast streaming has stopped.
+ 
+ Before calling the Function, capture some data Using fast streaming, Stop streaming Using ps2000_stop, and Then allocate 
+ sufficient buffer space To receive the requested data. The function will store the data in your buffer with values in the range 
+ PS2000_MIN_VALUE to PS2000_MAX_VALUE. The special value PS2000_LOST_DATA Is stored in the buffer when data could Not be 
+ collected because of a buffer overrun. (See Voltage ranges for more details of data values.)
+ </summary>
+ <param name="start_time"></param>
+ <param name="pBuffer_a"></param>
+ <param name="pBuffer_b"></param>
+ <param name="pBuffer_c"></param>
+ <param name="pBuffer_d"></param>
+ <param name="overflow"></param>
+ <param name="triggerAt"></param>
+ <param name="trigger"></param>
+ <param name="numValues"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.SetETS(System.Int16,System.Int16,System.Int16)">
+ <summary>
+ This function is used to enable or disable ETS mode and to set the ETS parameters.
+ </summary>
+ <param name="mode"></param>
+ <param name="ets_cycles"></param>
+ <param name="ets_interleave"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.adcToMv(System.Int32,System.Int32,System.Int16)">
+ <summary>
+ Converts from raw ADC values to mV values. The mV value returned depends upon the ADC count, and the voltage range set for the channel.
+ </summary>
+ <param name="raw"></param>
+ <param name="range"></param>
+ <param name="maxADCValue"></param>
+ <returns>mvVal = value converted into mV</returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.mvToAdc(System.Int16,System.Int32,System.Int16)">
+ <summary>
+ Converts from mV into ADC value. The ADC count returned depends upon the mV value, and the voltage range set for the channel.
+ </summary>
+ <param name="mv"></param>
+ <param name="range"></param>
+ <param name="maxADCValue"></param>
+ <returns>adcCount = value converted into an ADC count</returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.TimeUnitsToString(System.Int32)">
+ <summary>
+ This is just a method to show the timeunits magnitude
+ </summary>
+ <param name="timeUnits"></param>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.setETSMode(System.String,System.Int16,System.Int16)">
+ <summary>
+ To use this, pass in the desired mode and the handle from your app
+ </summary>
+ <param name="etsMode"></param>
+ <param name="handle"></param>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.GetMode(System.String)">
+ <summary>
+ converts the text selection passed to an ETS Mode
+ </summary>
+ <param name="etsMode"></param>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.FindDirection(System.String)">
+ <summary>
+ I removed the "this = that" ones as they never came up with intellisense, only the = part did???
+ </summary>
+ <param name="Input"></param>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.CheckRangeAgainstInput(VSMFreeCoilTest.Pico2205A.Channel,VSMFreeCoilTest.Pico2205A.Dc)">
+ <summary>
+ Not implemented yet, but a method to test the voltage range and adjust as necessary
+ This should be called in whatever is reading the ADC, currently that is in GetBlockData
+ Pass in the adc read.
+ </summary>
+ <returns></returns>
+</member>
+<member name="M:VSMFreeCoilTest.Pico2205A.SetSampleRate(System.Int16,System.Int16,System.Int16)">
+ <summary>
+ This function will return the SampleRate calculated from the total buffer size of 16K samples.
+ </summary>
+ <param name="channels">is the number of channels you are using, i.e. 1 (ChA) or 2(ChA and ChB)</param>
+ <param name="cycles">is the number of cycles you wish to read of the signal</param>
+ <param name="freq">is the freq of the signal you are reading</param>
+ <returns></returns>
+</member>
+</members>
+</doc>
